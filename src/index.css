@@ -1,0 +1,104 @@
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+:root {
+  color-scheme: light dark;
+  background-color: #ffffff;
+  --nav-text: #6b6375;
+  --nav-text-h: #08060d;
+  --nav-border: #e5e4e7;
+  --nav-social-bg: rgba(244, 243, 236, 0.5);
+  --nav-shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    background-color: #16171d;
+    --nav-text: #9ca3af;
+    --nav-text-h: #f3f4f6;
+    --nav-border: #2e303a;
+    --nav-social-bg: rgba(47, 48, 58, 0.5);
+    --nav-shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px,
+      rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+}
+
+.app-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 0.55rem max(1rem, env(safe-area-inset-left));
+  text-align: center;
+  font-size: 16px;
+  line-height: 145%;
+  letter-spacing: 0.18px;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  color: var(--nav-text);
+  background: color-mix(in srgb, #ffffff 94%, transparent);
+  border-bottom: 1px solid var(--nav-border);
+  box-sizing: border-box;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-nav {
+    background: color-mix(in srgb, #16171d 96%, transparent);
+  }
+}
+
+.app-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 6px 14px;
+  border-radius: 6px;
+  color: var(--nav-text-h);
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  background: var(--nav-social-bg);
+  border: 1px solid transparent;
+  transition: box-shadow 0.3s, border-color 0.3s;
+  max-width: calc(100vw - 2rem);
+  flex-wrap: wrap;
+}
+
+.app-nav a:hover {
+  box-shadow: var(--nav-shadow);
+  border-color: rgba(170, 59, 255, 0.35);
+}
+
+.app-nav a:focus-visible {
+  outline: 2px solid #aa3bff;
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-nav a:hover {
+    border-color: rgba(192, 132, 252, 0.4);
+  }
+
+  .app-nav a:focus-visible {
+    outline-color: #c084fc;
+  }
+}
+
+body {
+  margin: 0;
+  padding-top: 0;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 320px;
+  min-height: 100svh;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
