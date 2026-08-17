@@ -7,7 +7,9 @@ import { createWorker } from 'tesseract.js'
 GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.mjs`
 
 const GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+/** Modelo Groq — llama-3.3-70b-versatile foi descontinuado a 16/08/2026. */
+const GROQ_MODEL =
+  (import.meta.env.VITE_GROQ_MODEL as string | undefined)?.trim() || 'openai/gpt-oss-120b'
 /** Limite aproximado de caracteres enviados ao modelo (PDFs grandes). */
 const MAX_TEXT_FOR_LLM = 48_000
 /** Máximo de páginas processadas por OCR (desempenho no browser). */
@@ -69,7 +71,17 @@ function parseGroqJsonText(raw: string): unknown {
   if (t.startsWith('```')) {
     t = t.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '')
   }
-  return JSON.parse(t) as unknown
+  try {
+    return JSON.parse(t) as unknown
+  } catch {
+    // Modelos com “reasoning” podem misturar texto antes/depois do JSON.
+    const start = t.indexOf('{')
+    const end = t.lastIndexOf('}')
+    if (start >= 0 && end > start) {
+      return JSON.parse(t.slice(start, end + 1)) as unknown
+    }
+    throw new Error('Resposta JSON inválida da IA.')
+  }
 }
 
 function normalizeMonthlyMap(data: unknown): MonthlyMapResult {

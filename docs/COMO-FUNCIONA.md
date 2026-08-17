@@ -72,7 +72,7 @@ O texto completo pode ser enorme. Para o modelo existe um limite aproximado **`M
 ## 5. Como funciona a parte da IA (Groq)
 
 - **Endpoint**: `POST` para a API de chat da Groq, com **Bearer** `VITE_GROQ_API_KEY`.
-- **Modelo** (em código): `llama-3.3-70b-versatile` (pode ser alterado em `pdf-analysis.ts` se a Groq disponibilizar outros).
+- **Modelo** (em código): `openai/gpt-oss-120b` por omissão (substitui o `llama-3.3-70b-versatile` descontinuado). Podes alterar com `VITE_GROQ_MODEL` em `.env.local` (ex.: `qwen/qwen3.6-27b`).
 - **Resumo**: um pedido com instruções em português para devolver **Markdown** (secções, listas).
 - **Insights extra**: outro pedido com `response_format` JSON (estrutura: palavras-chave, entidades, cronologia, etc.).
 - **Mapa mensal**: JSON com série por mês; se houver dados, gera-se um diagrama **xychart-beta** Mermaid.
