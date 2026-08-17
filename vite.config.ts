@@ -17,6 +17,7 @@ export default defineConfig({
       'html2canvas',
       'dompurify',
       'marked',
+      'pdfjs-dist/legacy/build/pdf.mjs',
     ],
   },
   build: {

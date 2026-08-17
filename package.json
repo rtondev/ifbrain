@@ -17,7 +17,7 @@
     "lit": "^3.3.2",
     "marked": "^17.0.5",
     "mermaid": "^11.13.0",
-    "pdfjs-dist": "^5.5.207",
+    "pdfjs-dist": "^4.10.38",
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {

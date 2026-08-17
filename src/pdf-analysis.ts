@@ -1,10 +1,10 @@
 import './polyfills.js'
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-import pdfWorkerSrc from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 import { createWorker } from 'tesseract.js'
 
-GlobalWorkerOptions.workerSrc = pdfWorkerSrc
+/** Worker clássico em /public — mais fiável no Safari do que worker de módulo do Vite. */
+GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.mjs`
 
 const GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODEL = 'llama-3.3-70b-versatile'
@@ -655,7 +655,7 @@ export async function ocrPdfToText(
       const viewport = page.getViewport({ scale: OCR_SCALE })
       canvas.width = Math.floor(viewport.width)
       canvas.height = Math.floor(viewport.height)
-      const renderTask = page.render({ canvas, canvasContext: ctx, viewport })
+      const renderTask = page.render({ canvasContext: ctx, viewport })
       await renderTask.promise
 
       const {
@@ -683,9 +683,28 @@ export async function extractDocumentTextFromPdf(
   file: File,
   onProgress?: AnalyzeProgress,
 ): Promise<{ text: string; textSource: 'pdf-text' | 'ocr' }> {
-  const buf = await file.arrayBuffer()
   onProgress?.({ phase: 'extract', message: 'A extrair texto do PDF…' })
-  const pdf = await getDocument({ data: new Uint8Array(buf) }).promise
+
+  let pdf: PDFDocumentProxy
+  try {
+    const buf = await file.arrayBuffer()
+    // Cópia independente: evita ArrayBuffer “detached” ao enviar ao worker.
+    const data = new Uint8Array(buf.slice(0))
+    const task = getDocument({
+      data,
+      useSystemFonts: true,
+      isEvalSupported: false,
+      useWorkerFetch: false,
+      verbosity: 0,
+    })
+    pdf = await task.promise
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    throw new Error(
+      `Não foi possível abrir o PDF neste browser (${msg}). Tenta noutro ficheiro ou atualiza o Safari/Chrome.`,
+    )
+  }
+
   let raw = await extractTextFromPdfDocument(pdf)
   let textSource: 'pdf-text' | 'ocr' = 'pdf-text'
 

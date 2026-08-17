@@ -5,6 +5,71 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Análise de PDF — ifbrain</title>
+    <!-- Polyfills síncronos antes de qualquer módulo (Safari / iOS antigo). -->
+    <script>
+      ;(function () {
+        var P = Promise
+        if (typeof P.withResolvers !== 'function') {
+          P.withResolvers = function () {
+            var resolve, reject
+            var promise = new P(function (res, rej) {
+              resolve = res
+              reject = rej
+            })
+            return { promise: promise, resolve: resolve, reject: reject }
+          }
+        }
+        if (typeof Object.hasOwn !== 'function') {
+          Object.hasOwn = function (obj, prop) {
+            return Object.prototype.hasOwnProperty.call(obj, prop)
+          }
+        }
+        if (typeof structuredClone !== 'function') {
+          structuredClone = function (value) {
+            return JSON.parse(JSON.stringify(value))
+          }
+        }
+        if (typeof URL.parse !== 'function') {
+          URL.parse = function (url, base) {
+            try {
+              return base !== undefined ? new URL(url, base) : new URL(url)
+            } catch (e) {
+              return null
+            }
+          }
+        }
+        if (typeof URL.canParse !== 'function') {
+          URL.canParse = function (url, base) {
+            try {
+              if (base !== undefined) new URL(url, base)
+              else new URL(url)
+              return true
+            } catch (e) {
+              return false
+            }
+          }
+        }
+        if (typeof AbortSignal.any !== 'function') {
+          AbortSignal.any = function (signals) {
+            var controller = new AbortController()
+            var onAbort = function () {
+              controller.abort()
+              for (var i = 0; i < signals.length; i++) {
+                signals[i].removeEventListener('abort', onAbort)
+              }
+            }
+            for (var j = 0; j < signals.length; j++) {
+              if (signals[j].aborted) {
+                onAbort()
+                break
+              }
+              signals[j].addEventListener('abort', onAbort)
+            }
+            return controller.signal
+          }
+        }
+      })()
+    </script>
     <link rel="stylesheet" href="./src/index.css" />
     <script type="module" src="/src/pdf-analyzer-app.ts"></script>
   </head>
