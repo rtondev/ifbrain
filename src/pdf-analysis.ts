@@ -7,15 +7,39 @@ import { createWorker } from 'tesseract.js'
 GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.mjs`
 
 const GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions'
-/** Modelo Groq — llama-3.3-70b-versatile foi descontinuado a 16/08/2026. */
+/** Modelo Groq — llama-3.3-70b-versatile foi descontinuado a 16/08/2026.
+ *  No plano gratuito (~8000 TPM) preferimos o 20B; override com VITE_GROQ_MODEL. */
 const GROQ_MODEL =
-  (import.meta.env.VITE_GROQ_MODEL as string | undefined)?.trim() || 'openai/gpt-oss-120b'
-/** Limite aproximado de caracteres enviados ao modelo (PDFs grandes). */
-const MAX_TEXT_FOR_LLM = 48_000
+  (import.meta.env.VITE_GROQ_MODEL as string | undefined)?.trim() || 'openai/gpt-oss-20b'
+/**
+ * Limite de caracteres do documento por pedido.
+ * O tier gratuito Groq tem ~8000 TPM: pedidos maiores falham com rate_limit_exceeded.
+ * (~4 caracteres ≈ 1 token; deixamos margem para o prompt e a resposta.)
+ */
+const MAX_TEXT_FOR_LLM = 5_000
+/** Amostras ainda mais curtas para pedidos secundários (mapas / insights). */
+const MAX_TEXT_SECONDARY = 3_500
 /** Máximo de páginas processadas por OCR (desempenho no browser). */
 export const MAX_OCR_PAGES = 30
 /** Escala de renderização para OCR (maior = mais lento, melhor leitura). */
 const OCR_SCALE = 2.25
+
+function clipForLlm(text: string, max = MAX_TEXT_FOR_LLM): string {
+  const t = text.trim()
+  if (t.length <= max) return t
+  return `${t.slice(0, max)}\n\n[... texto truncado (${text.length} caracteres no total) ...]`
+}
+
+function throwIfGroqFailed(status: number, errBody: string, label: string): never {
+  if (/rate_limit_exceeded|Request too large|tokens per minute|TPM/i.test(errBody)) {
+    throw new Error(
+      `${label}: o PDF é grande demais para o limite gratuito da Groq (8000 tokens/min). ` +
+        `Espera cerca de 1 minuto e tenta de novo, ou usa um PDF mais curto. ` +
+        `(Detalhe: ${errBody.slice(0, 280)})`,
+    )
+  }
+  throw new Error(`${label} (${status}): ${errBody}`)
+}
 
 export type PdfAnalysisResult = {
   wordCount: number
@@ -175,13 +199,13 @@ Regras:
         },
       ],
       temperature: 0.2,
-      max_tokens: 2_048,
+      max_tokens: 800,
     }),
   })
 
   if (!res.ok) {
     const errBody = await res.text()
-    throw new Error(`Groq mapa mensal (${res.status}): ${errBody}`)
+    throwIfGroqFailed(res.status, errBody, 'Groq mapa mensal')
   }
 
   const data = (await res.json()) as {
@@ -390,13 +414,13 @@ ${textSample}
         },
       ],
       temperature: 0.25,
-      max_tokens: 3_000,
+      max_tokens: 1_024,
     }),
   })
 
   if (!res.ok) {
     const errBody = await res.text()
-    throw new Error(`Groq insights (${res.status}): ${errBody}`)
+    throwIfGroqFailed(res.status, errBody, 'Groq insights')
   }
 
   const data = (await res.json()) as {
@@ -455,7 +479,7 @@ Resposta direta e objetiva (Markdown simples permitido).`,
 
   if (!res.ok) {
     const errBody = await res.text()
-    throw new Error(`Groq chat (${res.status}): ${errBody}`)
+    throwIfGroqFailed(res.status, errBody, 'Groq chat')
   }
 
   const data = (await res.json()) as {
@@ -490,25 +514,25 @@ export async function compareDocumentsWithGroq(
           role: 'user',
           content: `Documento A:
 ---
-${textA.slice(0, 24_000)}
+${clipForLlm(textA, 2_500)}
 ---
 
 Documento B:
 ---
-${textB.slice(0, 24_000)}
+${clipForLlm(textB, 2_500)}
 ---
 
 Compara: (1) propósito/tipo de cada um, (2) pontos em comum, (3) diferenças principais, (4) se um complementa ou contradiz o outro. Se um texto for muito curto, indica-o.`,
         },
       ],
       temperature: 0.35,
-      max_tokens: 1_800,
+      max_tokens: 900,
     }),
   })
 
   if (!res.ok) {
     const errBody = await res.text()
-    throw new Error(`Groq comparar (${res.status}): ${errBody}`)
+    throwIfGroqFailed(res.status, errBody, 'Groq comparar')
   }
 
   const data = (await res.json()) as {
@@ -593,13 +617,13 @@ JSON exato:
         },
       ],
       temperature: 0.35,
-      max_tokens: 1_536,
+      max_tokens: 700,
     }),
   })
 
   if (!res.ok) {
     const errBody = await res.text()
-    throw new Error(`Groq mapa mental (${res.status}): ${errBody}`)
+    throwIfGroqFailed(res.status, errBody, 'Groq mapa mental')
   }
 
   const data = (await res.json()) as {
@@ -761,11 +785,7 @@ export function countWords(text: string): number {
  */
 export function analyzeExtractedText(fullText: string): PdfAnalysisResult {
   const wordCount = countWords(fullText)
-  const truncated = fullText.length > MAX_TEXT_FOR_LLM
-  const textSample = truncated
-    ? `${fullText.slice(0, MAX_TEXT_FOR_LLM)}\n\n[... texto truncado (${fullText.length} caracteres no total) ...]`
-    : fullText
-
+  const textSample = clipForLlm(fullText, MAX_TEXT_FOR_LLM)
   return { wordCount, textSample }
 }
 
@@ -809,13 +829,13 @@ Responde em Markdown, nesta ordem:
         },
       ],
       temperature: 0.35,
-      max_tokens: 1_400,
+      max_tokens: 900,
     }),
   })
 
   if (!res.ok) {
     const errBody = await res.text()
-    throw new Error(`Groq (${res.status}): ${errBody}`)
+    throwIfGroqFailed(res.status, errBody, 'Groq')
   }
 
   const data = (await res.json()) as {
@@ -845,20 +865,22 @@ export async function analyzePdfAndSummarize(
 }> {
   const { text: raw, textSource } = await extractDocumentTextFromPdf(file, onProgress)
   const { wordCount, textSample } = analyzeExtractedText(raw)
+  const secondarySample = clipForLlm(raw, MAX_TEXT_SECONDARY)
 
+  // Pedidos em sequência: o plano gratuito (~8000 TPM) não aguenta vários PDFs grandes em paralelo.
   onProgress?.({ phase: 'groq', message: 'A pedir resumo à IA…' })
   const summary = await summarizeWithGroq(textSample, wordCount, apiKey)
 
-  onProgress?.({ phase: 'groq', message: 'A gerar insights e mapa temporal (paralelo)…' })
-  const [extendedInsights, monthlyMap] = await Promise.all([
-    extractExtendedInsightsWithGroq(textSample, apiKey),
-    extractMonthlyMapWithGroq(textSample, apiKey),
-  ])
+  onProgress?.({ phase: 'groq', message: 'A gerar insights…' })
+  const extendedInsights = await extractExtendedInsightsWithGroq(secondarySample, apiKey)
+
+  onProgress?.({ phase: 'groq', message: 'A gerar mapa temporal…' })
+  const monthlyMap = await extractMonthlyMapWithGroq(secondarySample, apiKey)
 
   let mindMap: MindMapResult | null = null
   if (monthlyMap.entries.length === 0) {
     onProgress?.({ phase: 'groq', message: 'A gerar mapa mental em ramos (Mermaid)…' })
-    mindMap = await extractMindMapWithGroq(textSample, apiKey)
+    mindMap = await extractMindMapWithGroq(clipForLlm(raw, 2_500), apiKey)
   }
 
   return {
