@@ -1,7 +1,9 @@
+import './polyfills.js'
 import type { PropertyValues } from '@lit/reactive-element'
-import { LitElement, css, html } from 'lit'
+import { LitElement, css, html, unsafeCSS } from 'lit'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
 import { customElement, state } from 'lit/decorators.js'
+import fontAwesomeCss from '@fortawesome/fontawesome-free/css/all.min.css?inline'
 import {
   analyzePdfAndSummarize,
   answerQuestionWithGroq,
@@ -335,28 +337,37 @@ export class PdfAnalyzerApp extends LitElement {
                     <i class="fa-solid fa-comments icon-gap" aria-hidden="true"></i>
                     Perguntar ao documento
                   </h3>
-                  <textarea
-                    class="chat-input"
-                    rows="3"
-                    placeholder="Escreve uma pergunta sobre o conteúdo…"
-                    .value=${this.chatQuestion}
-                    @input=${(e: Event) => {
-                      this.chatQuestion = (e.target as HTMLTextAreaElement).value
-                    }}
-                    ?disabled=${this.chatLoading}
-                  ></textarea>
-                  <button
-                    type="button"
-                    class="counter counter--small"
-                    @click=${() => this._askChat(apiKey)}
-                    ?disabled=${this.chatLoading || !this.textSample || !this.chatQuestion.trim() || !apiKey}
-                  >
-                    ${this.chatLoading
-                      ? html`<i class="fa-solid fa-spinner fa-spin icon-gap" aria-hidden="true"></i
-                          >A pensar…`
-                      : html`<i class="fa-solid fa-paper-plane icon-gap" aria-hidden="true"></i
-                          >Enviar pergunta`}
-                  </button>
+                  <div class="chat-composer">
+                    <textarea
+                      class="chat-input"
+                      rows="3"
+                      placeholder="Escreve uma pergunta sobre o conteúdo…"
+                      .value=${this.chatQuestion}
+                      @input=${(e: Event) => {
+                        this.chatQuestion = (e.target as HTMLTextAreaElement).value
+                      }}
+                      @keydown=${(e: KeyboardEvent) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          void this._askChat(apiKey)
+                        }
+                      }}
+                      ?disabled=${this.chatLoading}
+                    ></textarea>
+                    <button
+                      type="button"
+                      class="send-btn"
+                      @click=${() => this._askChat(apiKey)}
+                      ?disabled=${this.chatLoading || !this.textSample || !this.chatQuestion.trim() || !apiKey}
+                      aria-label=${this.chatLoading ? 'A pensar' : 'Enviar pergunta'}
+                      title=${this.chatLoading ? 'A pensar…' : 'Enviar pergunta'}
+                    >
+                      ${this.chatLoading
+                        ? html`<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>`
+                        : html`<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>`}
+                      <span class="send-btn__label">${this.chatLoading ? 'A pensar…' : 'Enviar'}</span>
+                    </button>
+                  </div>
                   ${this.chatAnswer
                     ? html`<div class="chat-answer markdown-body">
                         ${unsafeHTML(markdownToSafeHtml(this.chatAnswer))}
@@ -1002,7 +1013,9 @@ export class PdfAnalyzerApp extends LitElement {
     this._stopTtsPlayback()
   }
 
-  static styles = css`
+  static styles = [
+    unsafeCSS(fontAwesomeCss),
+    css`
     :host {
       --text: #4a5560;
       --text-h: #0c1a12;
@@ -1635,12 +1648,19 @@ export class PdfAnalyzerApp extends LitElement {
       color: var(--text-h);
     }
 
+    .chat-composer {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
     .chat-input {
       width: 100%;
+      flex: 1 1 auto;
       box-sizing: border-box;
       min-height: 4.5rem;
       padding: 10px 12px;
-      margin-bottom: 10px;
+      margin-bottom: 0;
       font-family: var(--sans);
       font-size: 15px;
       line-height: 145%;
@@ -1659,6 +1679,62 @@ export class PdfAnalyzerApp extends LitElement {
 
     .chat-input:disabled {
       opacity: 0.6;
+    }
+
+    .send-btn {
+      flex-shrink: 0;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      min-height: 48px;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+
+    .send-btn i {
+      font-size: 1.05em;
+      color: inherit;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      filter: brightness(1.08);
+      box-shadow: var(--shadow);
+    }
+
+    .send-btn:focus-visible {
+      outline: 2px solid var(--accent-alt);
+      outline-offset: 2px;
+    }
+
+    .send-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 640px) {
+      .send-btn__label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+      }
+
+      .send-btn {
+        width: 48px;
+        padding: 0;
+        border-radius: 50%;
+      }
     }
 
     .compare-input {
@@ -1980,7 +2056,8 @@ export class PdfAnalyzerApp extends LitElement {
         height: 48px;
       }
     }
-  `
+  `,
+  ]
 }
 
 declare global {

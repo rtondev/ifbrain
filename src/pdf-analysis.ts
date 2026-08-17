@@ -1,6 +1,7 @@
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
+import './polyfills.js'
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+import pdfWorkerSrc from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 import { createWorker } from 'tesseract.js'
 
 GlobalWorkerOptions.workerSrc = pdfWorkerSrc
@@ -614,8 +615,13 @@ async function extractTextFromPdfDocument(pdf: PDFDocumentProxy): Promise<string
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i)
     const content = await page.getTextContent()
-    const line = content.items
-      .map((item) => ('str' in item && typeof item.str === 'string' ? item.str : ''))
+    const items = Array.isArray(content.items) ? content.items : []
+    const line = items
+      .map((item) => {
+        if (!item || typeof item !== 'object') return ''
+        const str = (item as { str?: unknown }).str
+        return typeof str === 'string' ? str : ''
+      })
       .filter(Boolean)
       .join(' ')
     parts.push(line)
