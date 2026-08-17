@@ -838,7 +838,7 @@ export class PdfAnalyzerApp extends LitElement {
           return
         }
         const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ctx.fillStyle = dark ? '#16171d' : '#ffffff'
+        ctx.fillStyle = dark ? '#0f1612' : '#f7fbf8'
         ctx.fillRect(0, 0, canvas.width, canvas.height)
         ctx.setTransform(scale, 0, 0, scale, 0, 0)
         ctx.drawImage(img, 0, 0)
@@ -1004,17 +1004,21 @@ export class PdfAnalyzerApp extends LitElement {
 
   static styles = css`
     :host {
-      --text: #6b6375;
-      --text-h: #08060d;
-      --bg: #fff;
-      --border: #e5e4e7;
-      --code-bg: #f4f3ec;
-      --accent: #aa3bff;
-      --accent-bg: rgba(170, 59, 255, 0.1);
-      --accent-border: rgba(170, 59, 255, 0.5);
-      --social-bg: rgba(244, 243, 236, 0.5);
+      --text: #4a5560;
+      --text-h: #0c1a12;
+      --bg: #f7fbf8;
+      --border: #c8ddd0;
+      --code-bg: #e8f5ec;
+      --accent: #15803d;
+      --accent-bg: rgba(21, 128, 61, 0.1);
+      --accent-border: rgba(21, 128, 61, 0.45);
+      --accent-alt: #dc2626;
+      --accent-alt-bg: rgba(220, 38, 38, 0.1);
+      --accent-alt-border: rgba(220, 38, 38, 0.45);
+      --social-bg: rgba(232, 245, 236, 0.65);
       --shadow:
-        rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+        rgba(21, 128, 61, 0.12) 0 10px 15px -3px,
+        rgba(220, 38, 38, 0.08) 0 4px 6px -2px;
 
       --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
       --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -1037,18 +1041,21 @@ export class PdfAnalyzerApp extends LitElement {
 
     @media (prefers-color-scheme: dark) {
       :host {
-        --text: #9ca3af;
-        --text-h: #f3f4f6;
-        --bg: #16171d;
-        --border: #2e303a;
-        --code-bg: #1f2028;
-        --accent: #c084fc;
-        --accent-bg: rgba(192, 132, 252, 0.15);
-        --accent-border: rgba(192, 132, 252, 0.5);
-        --social-bg: rgba(47, 48, 58, 0.5);
+        --text: #9cb5a5;
+        --text-h: #ecfdf3;
+        --bg: #0f1612;
+        --border: #2a3d32;
+        --code-bg: #1a2a20;
+        --accent: #4ade80;
+        --accent-bg: rgba(74, 222, 128, 0.14);
+        --accent-border: rgba(74, 222, 128, 0.45);
+        --accent-alt: #f87171;
+        --accent-alt-bg: rgba(248, 113, 113, 0.14);
+        --accent-alt-border: rgba(248, 113, 113, 0.45);
+        --social-bg: rgba(26, 42, 32, 0.7);
         --shadow:
-          rgba(0, 0, 0, 0.4) 0 10px 15px -3px,
-          rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+          rgba(0, 0, 0, 0.45) 0 10px 15px -3px,
+          rgba(74, 222, 128, 0.08) 0 4px 6px -2px;
       }
     }
 
@@ -1115,13 +1122,13 @@ export class PdfAnalyzerApp extends LitElement {
       padding: 12px 16px;
       text-align: left;
       border-radius: 6px;
-      border: 1px solid var(--accent-border);
-      background: var(--accent-bg);
+      border: 1px solid var(--accent-alt-border);
+      background: var(--accent-alt-bg);
       font-size: 15px;
     }
 
     .warn a {
-      color: var(--accent);
+      color: var(--accent-alt);
     }
 
     #center {
@@ -1332,16 +1339,10 @@ export class PdfAnalyzerApp extends LitElement {
     }
 
     .err {
-      color: #b91c1c;
+      color: var(--accent-alt);
       max-width: 36rem;
       font-size: 16px;
       text-align: center;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .err {
-        color: #fca5a5;
-      }
     }
 
     #results-wrap {
@@ -1433,7 +1434,7 @@ export class PdfAnalyzerApp extends LitElement {
 
     .fa-icon-title {
       margin-right: 0.35em;
-      color: var(--accent);
+      color: var(--accent-alt);
       font-size: 0.82em;
       vertical-align: 0.06em;
     }
@@ -1442,6 +1443,11 @@ export class PdfAnalyzerApp extends LitElement {
       margin-right: 0.45em;
       color: var(--accent);
       opacity: 0.95;
+    }
+
+    .fa-file-pdf.icon-gap,
+    .pick-file .fa-file-arrow-up {
+      color: var(--accent-alt);
     }
 
     .result-col--words {
@@ -1489,11 +1495,7 @@ export class PdfAnalyzerApp extends LitElement {
     .tts-bar-fill {
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(
-        90deg,
-        var(--accent),
-        color-mix(in srgb, var(--accent) 70%, var(--accent-border))
-      );
+      background: linear-gradient(90deg, var(--accent), var(--accent-alt));
       transition: width 0.09s linear;
     }
 
@@ -1713,14 +1715,8 @@ export class PdfAnalyzerApp extends LitElement {
     .mapa-export-err {
       margin: 12px 0 0;
       font-size: 14px;
-      color: #b91c1c;
+      color: var(--accent-alt);
       text-align: left;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .mapa-export-err {
-        color: #fca5a5;
-      }
     }
 
     .mapa-mental-h2 {
@@ -1781,13 +1777,7 @@ export class PdfAnalyzerApp extends LitElement {
       margin: 0;
       padding: 12px;
       font-size: 15px;
-      color: #b91c1c;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .mapa-mental-fail {
-        color: #fca5a5;
-      }
+      color: var(--accent-alt);
     }
 
     .markdown-body {
