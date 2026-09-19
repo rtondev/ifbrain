@@ -22,6 +22,17 @@ import {
 } from './mermaid-mindmap.js'
 import { markdownToSafeHtml } from './render-markdown.js'
 import { ic } from './icons.js'
+import {
+  DEMO_FULL,
+  DEMO_INSIGHTS,
+  DEMO_MIND,
+  DEMO_MONTHLY,
+  DEMO_PDF_NAME,
+  DEMO_PDF_URL,
+  DEMO_SUMMARY,
+  DEMO_TEXT_SAMPLE,
+  DEMO_WORD_COUNT,
+} from './demo-preview.js'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 
@@ -42,7 +53,9 @@ const WORDS_RETRO_PHRASES = [
 ]
 
 function pickRetroPhrase(wordCount: number): string {
-  return WORDS_RETRO_PHRASES[wordCount % WORDS_RETRO_PHRASES.length]
+  if (wordCount > 12_000) return 'Documento longo, de um trabalho grande.'
+  if (wordCount > 4_000) return 'Texto médio, dá para um resumo.'
+  return 'Documento curto e direto.'
 }
 
 function readingTimeHint(wordCount: number): string {
@@ -166,8 +179,20 @@ export class PdfAnalyzerApp extends LitElement {
 
         <div class="file-panel" @dragover=${this._onDragOver} @drop=${this._onDrop}>
           <div class="file-panel__head">
-            <span class="file-panel__title">O teu PDF</span>
-            <span class="file-panel__hint">Arrasta o ficheiro para aqui, ou clica para escolher.</span>
+            <div class="file-panel__copy">
+              <span class="file-panel__title">O teu PDF</span>
+              <span class="file-panel__hint">Arrasta o ficheiro para aqui, ou clica para escolher.</span>
+            </div>
+            <button
+              type="button"
+              class="demo-icon-btn"
+              title="Ver exemplo"
+              aria-label="Ver exemplo"
+              @click=${this._loadDemo}
+              ?disabled=${this.loading}
+            >
+              ${ic.test()}
+            </button>
           </div>
           <div class="file-panel__body">
             <input
@@ -435,6 +460,35 @@ export class PdfAnalyzerApp extends LitElement {
     if (el) el.value = ''
   }
 
+  /** Abre o PDF de exemplo e mostra o ecrã cheio, sem chamar a IA. */
+  private async _loadDemo() {
+    this._stopTtsPlayback()
+    this.mapExportError = ''
+    this.error = ''
+    this.statusHint = 'A abrir o exemplo…'
+    try {
+      const res = await fetch(DEMO_PDF_URL)
+      if (!res.ok) throw new Error('Não deu para abrir o PDF de exemplo.')
+      const blob = await res.blob()
+      this.file = new File([blob], DEMO_PDF_NAME, { type: 'application/pdf' })
+      this.wordCount = DEMO_WORD_COUNT
+      this.summary = DEMO_SUMMARY
+      this.textSource = 'pdf-text'
+      this.monthlyMap = DEMO_MONTHLY
+      this.mindMap = DEMO_MIND
+      this.extendedInsights = DEMO_INSIGHTS
+      this.fullText = DEMO_FULL
+      this.textSample = DEMO_TEXT_SAMPLE
+      this.compareResult = ''
+      this.chatAnswer = ''
+      this._lastMermaidDef = ''
+    } catch (err) {
+      this.error = err instanceof Error ? err.message : String(err)
+    } finally {
+      this.statusHint = ''
+    }
+  }
+
   private async _analyze(apiKey: string) {
     if (!this.file || !apiKey) return
     this._stopTtsPlayback()
@@ -499,30 +553,34 @@ export class PdfAnalyzerApp extends LitElement {
 
   private async _syncMermaid() {
     const host = this.renderRoot.querySelector('#mermaid-svg-host') as HTMLElement | null
-    if (!host) return
+    const hostMind = this.renderRoot.querySelector('#mermaid-svg-host-mind') as HTMLElement | null
 
     const hasMonthly = this.monthlyMap && this.monthlyMap.entries.length > 0
     const mmMind = this.mindMap
 
+    const defMonthly = hasMonthly ? monthlyMapToMermaidDefinition(this.monthlyMap!) : ''
+    const defMind = mmMind ? mindMapToMermaidDefinition(mmMind) : ''
+    const key = `${defMonthly}||${defMind}`
+
     if (!hasMonthly && !mmMind) {
-      host.innerHTML = ''
+      if (host) host.innerHTML = ''
+      if (hostMind) hostMind.innerHTML = ''
       this._lastMermaidDef = ''
       return
     }
 
-    const def = hasMonthly
-      ? monthlyMapToMermaidDefinition(this.monthlyMap!)
-      : mindMapToMermaidDefinition(mmMind!)
+    if (key === this._lastMermaidDef) return
+    this._lastMermaidDef = key
 
-    if (def === this._lastMermaidDef) return
-    this._lastMermaidDef = def
+    const fail =
+      '<p class="mapa-mental-fail">Não deu para desenhar o mapa. Recarrega a página e tenta outra vez.</p>'
 
     try {
-      host.innerHTML = await renderMermaidToSvg(def)
+      if (host) host.innerHTML = defMonthly ? await renderMermaidToSvg(defMonthly) : ''
+      if (hostMind) hostMind.innerHTML = defMind ? await renderMermaidToSvg(defMind) : ''
     } catch (err) {
       console.error(err)
-      host.innerHTML =
-        '<p class="mapa-mental-fail">Não deu para desenhar o mapa. Recarrega a página e tenta outra vez.</p>'
+      if (host) host.innerHTML = fail
     }
   }
 
@@ -919,13 +977,20 @@ export class PdfAnalyzerApp extends LitElement {
                     Unidade: <strong>${mm!.unit}</strong>
                   </p>`
                 : null}
+              <div id="mermaid-svg-host" class="mermaid-svg-host"></div>
             `
           : html`
               <p class="mapa-mental-lead">
                 Ideias do PDF em ramos. Não havia números claros por mês.
               </p>
+              <div id="mermaid-svg-host" class="mermaid-svg-host"></div>
             `}
-        <div id="mermaid-svg-host" class="mermaid-svg-host"></div>
+        ${hasMind && hasMonthly
+          ? html`
+              <p class="mapa-mental-lead">Ideias do PDF em ramos.</p>
+              <div id="mermaid-svg-host-mind" class="mermaid-svg-host"></div>
+            `
+          : html`<div id="mermaid-svg-host-mind" class="mermaid-svg-host" hidden></div>`}
         ${this.mapExportError
           ? html`<p class="mapa-export-err" role="alert">${this.mapExportError}</p>`
           : null}
@@ -1155,13 +1220,51 @@ export class PdfAnalyzerApp extends LitElement {
 
     .file-panel__head {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      flex-direction: row;
       align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
       text-align: left;
       padding: 16px 18px 14px;
       border-bottom: 1px solid var(--border);
       background: var(--social-bg);
+    }
+
+    .file-panel__copy {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .demo-icon-btn {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 980px;
+      background: var(--bg);
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .demo-icon-btn:hover:not(:disabled) {
+      box-shadow: var(--shadow);
+    }
+
+    .demo-icon-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .demo-icon-btn .ui-icon {
+      width: 18px;
+      height: 18px;
     }
 
     .file-panel__title {
