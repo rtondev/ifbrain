@@ -141,7 +141,7 @@ export class PdfAnalyzerApp extends LitElement {
     return html`
       <section id="center">
         <header class="page-head">
-          <h1>${ic.fileText('ui-icon--title')} Análise de PDF</h1>
+          <h1>Análise de PDF</h1>
           <p class="lead">
             Carrega um PDF: <strong>resumo</strong>, <strong>insights</strong> (palavras-chave,
             pontos, perguntas, cronologia, entidades, tradução EN, tom, nível de leitura, dados
@@ -175,7 +175,7 @@ export class PdfAnalyzerApp extends LitElement {
 
         <div class="file-panel" @dragover=${this._onDragOver} @drop=${this._onDrop}>
           <div class="file-panel__head">
-            <span class="file-panel__title">${ic.folder()} Ficheiro PDF</span>
+            <span class="file-panel__title">Ficheiro PDF</span>
             <span class="file-panel__hint"
               >Arrasta para aqui ou escolhe um ficheiro · digitalizações usam OCR se não houver
               texto</span
