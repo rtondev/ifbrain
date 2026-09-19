@@ -1,9 +1,8 @@
 import './polyfills.js'
 import type { PropertyValues } from '@lit/reactive-element'
-import { LitElement, css, html, unsafeCSS } from 'lit'
+import { LitElement, css, html } from 'lit'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
 import { customElement, state } from 'lit/decorators.js'
-import fontAwesomeCss from '@fortawesome/fontawesome-free/css/all.min.css?inline'
 import {
   analyzePdfAndSummarize,
   answerQuestionWithGroq,
@@ -22,6 +21,7 @@ import {
   renderMermaidToSvg,
 } from './mermaid-mindmap.js'
 import { markdownToSafeHtml } from './render-markdown.js'
+import { ic } from './icons.js'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 
@@ -140,45 +140,42 @@ export class PdfAnalyzerApp extends LitElement {
 
     return html`
       <section id="center">
-        <h1>
-          <i class="fa-solid fa-file-pdf fa-icon-title" aria-hidden="true"></i>
-          Análise de PDF
-        </h1>
-        <p class="lead">
-          <i class="fa-solid fa-wand-magic-sparkles icon-gap" aria-hidden="true"></i>
-          Carrega um PDF: <strong>resumo</strong>, <strong>insights</strong> (palavras-chave,
-          pontos, perguntas, cronologia, entidades, tradução EN, tom, nível de leitura, dados
-          sensíveis, tabelas), <strong>mapa mental</strong> (Mermaid), <strong>chat</strong> com o
-          documento, <strong>comparar</strong> com outro PDF, <strong>exportar</strong> e
-          <strong>ouvir</strong> o resumo (Groq).
-        </p>
-        <p class="note-scan">
-          <i class="fa-solid fa-eye icon-gap" aria-hidden="true"></i>
-          <strong>Digitalizações:</strong> primeiro tentamos ler o <em>texto do PDF</em>. Se não
-          houver texto (só imagem/scan), corre-se <strong>OCR automático</strong> no teu
-          dispositivo — a primeira vez pode demorar a descarregar os idiomas. PDFs muito longos
-          usam OCR só até ${MAX_OCR_PAGES} páginas por desempenho.
-        </p>
+        <header class="page-head">
+          <h1>${ic.fileText('ui-icon--title')} Análise de PDF</h1>
+          <p class="lead">
+            Carrega um PDF: <strong>resumo</strong>, <strong>insights</strong> (palavras-chave,
+            pontos, perguntas, cronologia, entidades, tradução EN, tom, nível de leitura, dados
+            sensíveis, tabelas), <strong>mapa mental</strong> (Mermaid), <strong>chat</strong> com o
+            documento, <strong>comparar</strong> com outro PDF, <strong>exportar</strong> e
+            <strong>ouvir</strong> o resumo (Groq).
+          </p>
+          <p class="note-scan">
+            <strong>Digitalizações:</strong> primeiro tentamos ler o <em>texto do PDF</em>. Se não
+            houver texto (só imagem/scan), corre-se <strong>OCR automático</strong> no teu
+            dispositivo — a primeira vez pode demorar a descarregar os idiomas. PDFs muito longos
+            usam OCR só até ${MAX_OCR_PAGES} páginas por desempenho.
+          </p>
+        </header>
 
         ${!import.meta.env.VITE_GROQ_API_KEY
           ? html`
               <div class="warn" role="status">
-                <i class="fa-solid fa-key icon-gap" aria-hidden="true"></i>
-                <strong>Chave API em falta.</strong> Cria
-                <code>.env.local</code> na raiz com
-                <code>VITE_GROQ_API_KEY=…</code>
-                (<a href="https://console.groq.com/keys" target="_blank" rel="noreferrer"
-                  >console.groq.com</a
-                >). Reinicia o <code>dev</code> depois de guardar.
+                ${ic.key()}
+                <div>
+                  <strong>Chave API em falta.</strong> Cria
+                  <code>.env.local</code> na raiz com
+                  <code>VITE_GROQ_API_KEY=…</code>
+                  (<a href="https://console.groq.com/keys" target="_blank" rel="noreferrer"
+                    >console.groq.com</a
+                  >). Reinicia o <code>dev</code> depois de guardar.
+                </div>
               </div>
             `
           : null}
 
         <div class="file-panel" @dragover=${this._onDragOver} @drop=${this._onDrop}>
           <div class="file-panel__head">
-            <span class="file-panel__title"
-              ><i class="fa-solid fa-folder-open icon-gap" aria-hidden="true"></i>Ficheiro PDF</span
-            >
+            <span class="file-panel__title">${ic.folder()} Ficheiro PDF</span>
             <span class="file-panel__hint"
               >Arrasta para aqui ou escolhe um ficheiro · digitalizações usam OCR se não houver
               texto</span
@@ -196,10 +193,7 @@ export class PdfAnalyzerApp extends LitElement {
             <label for="pdf-file" class="pick-file" ?data-has-file=${!!this.file}>
               ${this.file
                 ? html`<span class="pick-file__name" title=${this.file.name}>${this.file.name}</span>`
-                : html`<span class="pick-file__cta"
-                  ><i class="fa-solid fa-file-arrow-up icon-gap" aria-hidden="true"></i>Escolher
-                  PDF…</span
-                >`}
+                : html`<span class="pick-file__cta">${ic.upload()} Escolher PDF…</span>`}
             </label>
             ${this.file
               ? html`
@@ -223,10 +217,8 @@ export class PdfAnalyzerApp extends LitElement {
               ?disabled=${this.loading || !this.file || !apiKey}
             >
               ${this.loading
-                ? html`<i class="fa-solid fa-spinner fa-spin icon-gap" aria-hidden="true"></i>A
-                    analisar…`
-                : html`<i class="fa-solid fa-magnifying-glass-chart icon-gap" aria-hidden="true"></i
-                    >Analisar PDF`}
+                ? html`${ic.spin()} A analisar…`
+                : html`${ic.search()} Analisar PDF`}
             </button>
           </div>
         </div>
@@ -248,17 +240,12 @@ export class PdfAnalyzerApp extends LitElement {
                   : 'source-badge--layer'}"
               >
                 ${this.textSource === 'ocr'
-                  ? html`<i class="fa-solid fa-camera-retro icon-gap" aria-hidden="true"></i>Texto
-                      obtido por OCR automático (digitalização).`
-                  : html`<i class="fa-solid fa-layer-group icon-gap" aria-hidden="true"></i>Texto
-                      lido da camada do PDF (selecionável).`}
+                  ? html`${ic.scan()} Texto obtido por OCR automático (digitalização).`
+                  : html`${ic.layers()} Texto lido da camada do PDF (selecionável).`}
               </p>
               <div class="results-cols">
                 <div class="result-col result-col--words">
-                  <h2>
-                    <i class="fa-solid fa-hashtag icon-gap" aria-hidden="true"></i>
-                    Palavras
-                  </h2>
+                  <h2>${ic.hash()} Palavras</h2>
                   <p class="stat">${this.wordCount}</p>
                   <p class="retro-line">${pickRetroPhrase(this.wordCount!)}</p>
                   <p class="words-meta">${readingTimeHint(this.wordCount!)}</p>
@@ -267,10 +254,7 @@ export class PdfAnalyzerApp extends LitElement {
                   </p>
                 </div>
                 <div class="result-col result-col--summary">
-                  <h2>
-                    <i class="fa-solid fa-robot icon-gap" aria-hidden="true"></i>
-                    Análise (IA)
-                  </h2>
+                  <h2>${ic.bot()} Análise (IA)</h2>
                   <div class="summary markdown-body">
                     ${unsafeHTML(markdownToSafeHtml(this.summary))}
                   </div>
@@ -283,7 +267,7 @@ export class PdfAnalyzerApp extends LitElement {
                   @click=${this._exportJson}
                   ?disabled=${!this.extendedInsights}
                 >
-                  <i class="fa-solid fa-file-code" aria-hidden="true"></i>
+                  ${ic.fileJson()}
                   Exportar JSON
                 </button>
                 <button
@@ -292,7 +276,7 @@ export class PdfAnalyzerApp extends LitElement {
                   @click=${this._exportTxt}
                   ?disabled=${!this.fullText}
                 >
-                  <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
+                  ${ic.fileType()}
                   Exportar texto (.txt)
                 </button>
                 <button
@@ -302,9 +286,8 @@ export class PdfAnalyzerApp extends LitElement {
                   ?disabled=${!this.summary}
                 >
                   ${this.ttsActive
-                    ? html`<i class="fa-solid fa-stop" aria-hidden="true"></i> Parar voz`
-                    : html`<i class="fa-solid fa-volume-high" aria-hidden="true"></i> Ouvir resumo
-                        (voz)`}
+                    ? html`${ic.stop()} Parar voz`
+                    : html`${ic.volume()} Ouvir resumo (voz)`}
                 </button>
               </div>
               ${this.summary && (this.ttsActive || this.ttsProgressPct > 0)
@@ -321,7 +304,7 @@ export class PdfAnalyzerApp extends LitElement {
                         <div class="tts-bar-fill" style="width: ${this.ttsProgressPct}%"></div>
                       </div>
                       <p class="tts-meta">
-                        <i class="fa-solid fa-stopwatch icon-gap" aria-hidden="true"></i>
+                        ${ic.timer()}
                         Estimativa total: ~${this._fmtTts(this.ttsEstimateSec)} · Decorrido:
                         ${this._fmtTts(this.ttsElapsedSec)} · Faltam ~${this._fmtTts(
                           Math.max(0, this.ttsEstimateSec - this.ttsElapsedSec),
@@ -333,10 +316,7 @@ export class PdfAnalyzerApp extends LitElement {
               ${this._renderInsightsDeck()}
               <div class="extras-grid">
                 <div class="extra-card">
-                  <h3 class="extra-title">
-                    <i class="fa-solid fa-comments icon-gap" aria-hidden="true"></i>
-                    Perguntar ao documento
-                  </h3>
+                  <h3 class="extra-title">${ic.chat()} Perguntar ao documento</h3>
                   <div class="chat-composer">
                     <textarea
                       class="chat-input"
@@ -362,9 +342,7 @@ export class PdfAnalyzerApp extends LitElement {
                       aria-label=${this.chatLoading ? 'A pensar' : 'Enviar pergunta'}
                       title=${this.chatLoading ? 'A pensar…' : 'Enviar pergunta'}
                     >
-                      ${this.chatLoading
-                        ? html`<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>`
-                        : html`<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>`}
+                      ${this.chatLoading ? ic.spin() : ic.send()}
                       <span class="send-btn__label">${this.chatLoading ? 'A pensar…' : 'Enviar'}</span>
                     </button>
                   </div>
@@ -375,10 +353,7 @@ export class PdfAnalyzerApp extends LitElement {
                     : null}
                 </div>
                 <div class="extra-card">
-                  <h3 class="extra-title">
-                    <i class="fa-solid fa-code-compare icon-gap" aria-hidden="true"></i>
-                    Comparar com outro PDF
-                  </h3>
+                  <h3 class="extra-title">${ic.compare()} Comparar com outro PDF</h3>
                   <input
                     id="compare-pdf"
                     type="file"
@@ -400,10 +375,8 @@ export class PdfAnalyzerApp extends LitElement {
                     !apiKey}
                   >
                     ${this.compareLoading
-                      ? html`<i class="fa-solid fa-spinner fa-spin icon-gap" aria-hidden="true"></i
-                          >A comparar…`
-                      : html`<i class="fa-solid fa-scale-balanced icon-gap" aria-hidden="true"></i
-                          >Comparar documentos`}
+                      ? html`${ic.spin()} A comparar…`
+                      : html`${ic.scale()} Comparar documentos`}
                   </button>
                   ${this.compareResult
                     ? html`<div class="compare-out markdown-body">
@@ -577,36 +550,22 @@ export class PdfAnalyzerApp extends LitElement {
 
     return html`
       <div class="insights-deck">
-        <h2 class="section-title">
-          <i class="fa-solid fa-lightbulb icon-gap" aria-hidden="true"></i>
-          Insights extra
-        </h2>
+        <h2 class="section-title">${ic.bulb()} Insights extra</h2>
         <div class="insights-grid">
           <details class="insight-block" open>
-            <summary
-              ><i class="fa-solid fa-key icon-summary" aria-hidden="true"></i>Palavras-chave</summary
-            >
+            <summary>${ic.key()} Palavras-chave</summary>
             ${li(ex.keywords)}
           </details>
           <details class="insight-block" open>
-            <summary
-              ><i class="fa-solid fa-list-check icon-summary" aria-hidden="true"></i>Pontos
-              principais</summary
-            >
+            <summary>${ic.checks()} Pontos principais</summary>
             ${li(ex.mainPoints)}
           </details>
           <details class="insight-block">
-            <summary
-              ><i class="fa-solid fa-circle-question icon-summary" aria-hidden="true"></i>Perguntas
-              sugeridas</summary
-            >
+            <summary>${ic.help()} Perguntas sugeridas</summary>
             ${li(ex.suggestedQuestions)}
           </details>
           <details class="insight-block">
-            <summary
-              ><i class="fa-solid fa-clock-rotate-left icon-summary" aria-hidden="true"></i
-              >Cronologia</summary
-            >
+            <summary>${ic.history()} Cronologia</summary>
             ${ex.timeline.length
               ? html`<ul class="insight-ul">
                   ${ex.timeline.map(
@@ -617,9 +576,7 @@ export class PdfAnalyzerApp extends LitElement {
               : html`<p class="empty-hint">—</p>`}
           </details>
           <details class="insight-block">
-            <summary
-              ><i class="fa-solid fa-users icon-summary" aria-hidden="true"></i>Entidades</summary
-            >
+            <summary>${ic.users()} Entidades</summary>
             <div class="entity-cols">
               <div>
                 <span class="entity-label">Pessoas</span>
@@ -640,35 +597,23 @@ export class PdfAnalyzerApp extends LitElement {
             </div>
           </details>
           <details class="insight-block">
-            <summary
-              ><i class="fa-solid fa-language icon-summary" aria-hidden="true"></i>Tradução
-              (EN)</summary
-            >
+            <summary>${ic.lang()} Tradução (EN)</summary>
             ${ex.translation.summaryEn
               ? html`<p class="trans-en">${ex.translation.summaryEn}</p>`
               : html`<p class="empty-hint">—</p>`}
           </details>
           <details class="insight-block">
-            <summary
-              ><i class="fa-solid fa-masks-theater icon-summary" aria-hidden="true"></i>Tom e
-              tipo</summary
-            >
+            <summary>${ic.drama()} Tom e tipo</summary>
             <p><strong>Formalidade:</strong> ${ex.tone.formality || '—'}</p>
             <p><strong>Tipo de documento:</strong> ${ex.tone.documentTypeGuess || '—'}</p>
             <p><strong>Público:</strong> ${ex.tone.audience || '—'}</p>
           </details>
           <details class="insight-block">
-            <summary
-              ><i class="fa-solid fa-book-open icon-summary" aria-hidden="true"></i>Nível de
-              leitura</summary
-            >
+            <summary>${ic.book()} Nível de leitura</summary>
             <p>${ex.readingLevel || '—'}</p>
           </details>
           <details class="insight-block">
-            <summary
-              ><i class="fa-solid fa-shield-halved icon-summary" aria-hidden="true"></i>Dados
-              sensíveis (aviso)</summary
-            >
+            <summary>${ic.shield()} Dados sensíveis (aviso)</summary>
             ${ex.sensitiveHints.length
               ? html`<ul class="insight-ul warn-list">
                   ${ex.sensitiveHints.map(
@@ -678,10 +623,7 @@ export class PdfAnalyzerApp extends LitElement {
               : html`<p class="empty-hint">Nada assinalado pela IA.</p>`}
           </details>
           <details class="insight-block">
-            <summary
-              ><i class="fa-solid fa-table icon-summary" aria-hidden="true"></i>Tabelas /
-              grelhas</summary
-            >
+            <summary>${ic.table()} Tabelas / grelhas</summary>
             <p>${ex.tablesDescription || '—'}</p>
           </details>
         </div>
@@ -966,23 +908,19 @@ export class PdfAnalyzerApp extends LitElement {
     return html`
       <div class="mapa-mental-section">
         <div class="mapa-mental-head">
-          <h2 class="mapa-mental-h2">
-            <i class="fa-solid fa-diagram-project icon-gap" aria-hidden="true"></i>
-            Mapa mental
-          </h2>
+          <h2 class="mapa-mental-h2">${ic.map()} Mapa mental</h2>
           <button
             type="button"
             class="toolbar-btn mapa-export-btn"
             @click=${this._exportMindMapPdf}
           >
-            <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+            ${ic.fileDown()}
             Exportar PDF
           </button>
         </div>
         ${hasMonthly
           ? html`
               <p class="mapa-mental-lead">
-                <i class="fa-solid fa-chart-column icon-gap" aria-hidden="true"></i>
                 Evolução temporal dos dados encontrados no documento (gráfico de barras Mermaid).
               </p>
               ${!this._badMapTitle(mm!.title)
@@ -996,7 +934,6 @@ export class PdfAnalyzerApp extends LitElement {
             `
           : html`
               <p class="mapa-mental-lead">
-                <i class="fa-solid fa-code-branch icon-gap" aria-hidden="true"></i>
                 Estrutura em ramos do conteúdo (diagrama Mermaid). Sem série mensal clara no texto.
               </p>
             `}
@@ -1013,9 +950,7 @@ export class PdfAnalyzerApp extends LitElement {
     this._stopTtsPlayback()
   }
 
-  static styles = [
-    unsafeCSS(fontAwesomeCss),
-    css`
+  static styles = css`
     :host {
       --text: #1c1c1e;
       --text-h: #000000;
@@ -1040,9 +975,9 @@ export class PdfAnalyzerApp extends LitElement {
       font: 17px/1.47 var(--sans);
       letter-spacing: -0.22px;
 
-      width: 1126px;
-      max-width: calc(100% - 24px);
-      margin: 12px auto 24px;
+      width: min(720px, calc(100% - 24px));
+      max-width: 100%;
+      margin: 16px auto 24px;
       text-align: center;
       min-height: calc(100svh - 3.5rem);
       display: flex;
@@ -1084,18 +1019,54 @@ export class PdfAnalyzerApp extends LitElement {
     }
 
     h1 {
-      font-size: 40px;
-      line-height: 1.05;
-      letter-spacing: -1.2px;
-      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 34px;
+      line-height: 1.1;
+      letter-spacing: -1.1px;
+      margin: 0;
       text-align: left;
     }
 
     h2 {
-      font-size: 24px;
-      line-height: 118%;
-      letter-spacing: -0.24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: -0.3px;
       margin: 0 0 8px;
+    }
+
+    .page-head {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .ui-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      display: block;
+      color: var(--accent);
+    }
+
+    .ui-icon--title {
+      width: 28px;
+      height: 28px;
+    }
+
+    .ui-icon--spin {
+      animation: ui-spin 0.8s linear infinite;
+    }
+
+    @keyframes ui-spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     p {
@@ -1103,8 +1074,8 @@ export class PdfAnalyzerApp extends LitElement {
     }
 
     .lead {
-      max-width: 40rem;
-      margin: 0 0 8px;
+      max-width: none;
+      margin: 0;
       text-align: left;
       font-size: 17px;
       line-height: 1.47;
@@ -1112,16 +1083,16 @@ export class PdfAnalyzerApp extends LitElement {
     }
 
     .note-scan {
-      max-width: 40rem;
-      margin: 0 0 8px;
+      max-width: none;
+      margin: 0;
       padding: 0;
       text-align: left;
-      font-size: 17px;
+      font-size: 15px;
       line-height: 1.47;
       border-radius: 0;
       border: none;
       background: transparent;
-      color: var(--text);
+      color: var(--muted);
     }
 
     .note-scan strong {
@@ -1140,8 +1111,11 @@ export class PdfAnalyzerApp extends LitElement {
     }
 
     .warn {
-      max-width: 40rem;
-      margin: 0 0 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      max-width: none;
+      margin: 0;
       padding: 14px 16px;
       text-align: left;
       border-radius: 16px;
@@ -1160,10 +1134,10 @@ export class PdfAnalyzerApp extends LitElement {
       gap: 16px;
       align-items: stretch;
       flex-grow: 1;
-      padding: 40px 44px 36px;
+      padding: 28px 28px 24px;
       margin: 0;
       background: var(--bg);
-      border-radius: 40px;
+      border-radius: 28px;
       box-shadow: var(--shadow);
       text-align: left;
       box-sizing: border-box;
@@ -1183,8 +1157,8 @@ export class PdfAnalyzerApp extends LitElement {
 
     .file-panel {
       width: 100%;
-      max-width: min(40rem, 100%);
-      border-radius: 22px;
+      max-width: none;
+      border-radius: 18px;
       border: 1px solid var(--border);
       background: var(--bg);
       overflow: hidden;
@@ -1375,8 +1349,12 @@ export class PdfAnalyzerApp extends LitElement {
 
     #results-wrap {
       width: 100%;
-      border-top: 1px solid var(--border);
       text-align: left;
+      background: var(--bg);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      box-sizing: border-box;
     }
 
     .source-badge {
@@ -1454,28 +1432,23 @@ export class PdfAnalyzerApp extends LitElement {
       cursor: not-allowed;
     }
 
-    .toolbar-btn i,
-    .counter--small i,
-    .counter.counter--primary i {
-      margin-right: 0.4em;
+    .toolbar-btn,
+    .counter.counter--primary,
+    .counter--small,
+    .file-panel__title,
+    .pick-file__cta,
+    .source-badge,
+    .extra-title,
+    .section-title,
+    .insight-block > summary,
+    .tts-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .fa-icon-title {
-      margin-right: 0.35em;
-      color: var(--accent-alt);
-      font-size: 0.82em;
-      vertical-align: 0.06em;
-    }
-
-    .icon-gap {
-      margin-right: 0.45em;
-      color: var(--accent);
-      opacity: 0.95;
-    }
-
-    .fa-file-pdf.icon-gap,
-    .pick-file .fa-file-arrow-up {
-      color: var(--accent-alt);
+    .section-title {
+      justify-content: flex-start;
     }
 
     .result-col--words {
@@ -1555,15 +1528,9 @@ export class PdfAnalyzerApp extends LitElement {
       letter-spacing: -0.2px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       flex-wrap: wrap;
-      gap: 0.35em;
-    }
-
-    .icon-summary {
-      margin-right: 0.45em;
-      color: var(--accent);
-      font-size: 0.95em;
+      gap: 8px;
     }
 
     .insights-grid {
@@ -1651,7 +1618,7 @@ export class PdfAnalyzerApp extends LitElement {
     .extra-card {
       padding: 1rem 1.1rem;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 16px;
       background: var(--social-bg);
     }
 
@@ -1716,8 +1683,7 @@ export class PdfAnalyzerApp extends LitElement {
       transition: filter 0.2s, box-shadow 0.2s, transform 0.15s;
     }
 
-    .send-btn i {
-      font-size: 1.05em;
+    .send-btn .ui-icon {
       color: inherit;
     }
 
@@ -1973,31 +1939,18 @@ export class PdfAnalyzerApp extends LitElement {
     }
 
     #spacer {
-      height: 88px;
-      border-top: 1px solid var(--border);
+      height: 12px;
+      border-top: none;
     }
 
     .ticks {
-      position: relative;
+      height: 12px;
       width: 100%;
     }
 
     .ticks::before,
     .ticks::after {
-      content: '';
-      position: absolute;
-      top: -4.5px;
-      border: 5px solid transparent;
-    }
-
-    .ticks::before {
-      left: 0;
-      border-left-color: var(--border);
-    }
-
-    .ticks::after {
-      right: 0;
-      border-right-color: var(--border);
+      display: none;
     }
 
     @media (max-width: 1024px) {
@@ -2008,8 +1961,8 @@ export class PdfAnalyzerApp extends LitElement {
       }
 
       h1 {
-        font-size: 36px;
-        margin: 20px 0;
+        font-size: 28px;
+        margin: 0;
       }
 
       h2 {
@@ -2071,8 +2024,7 @@ export class PdfAnalyzerApp extends LitElement {
         height: 48px;
       }
     }
-  `,
-  ]
+  `
 }
 
 declare global {
