@@ -32,8 +32,7 @@ function clipForLlm(text: string, max = MAX_TEXT_FOR_LLM): string {
 function throwIfGroqFailed(status: number, errBody: string, label: string): never {
   if (/rate_limit_exceeded|Request too large|tokens per minute|TPM/i.test(errBody)) {
     throw new Error(
-      `${label}: limite de ritmo da Groq (tokens/min). ` +
-        `Espera cerca de 1 minuto e tenta de novo, ou usa um PDF mais curto. ` +
+      `${label}: a IA está ocupada. Espera 1 minuto e tenta outra vez. ` +
         `(Detalhe: ${errBody.slice(0, 280)})`,
     )
   }
@@ -718,7 +717,7 @@ export async function extractDocumentTextFromPdf(
   file: File,
   onProgress?: AnalyzeProgress,
 ): Promise<{ text: string; textSource: 'pdf-text' | 'ocr' }> {
-  onProgress?.({ phase: 'extract', message: 'A extrair texto do PDF…' })
+  onProgress?.({ phase: 'extract', message: 'A ler o PDF…' })
 
   let pdf: PDFDocumentProxy
   try {
@@ -746,11 +745,11 @@ export async function extractDocumentTextFromPdf(
   if (!raw.trim()) {
     onProgress?.({
       phase: 'ocr',
-      message: 'Sem texto selecionável. A carregar OCR (primeira vez pode demorar)…',
+      message: 'Este PDF é uma imagem. A ler as letras… (à primeira vez pode demorar)',
     })
     try {
       raw = await ocrPdfToText(pdf, (page, total) => {
-        onProgress?.({ phase: 'ocr', message: `OCR: página ${page} de ${total}…` })
+        onProgress?.({ phase: 'ocr', message: `A ler a página ${page} de ${total}…` })
       })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -763,7 +762,7 @@ export async function extractDocumentTextFromPdf(
 
   if (!raw.trim()) {
     throw new Error(
-      'Não foi possível obter texto nem pela camada do PDF nem por OCR. Verifica se o PDF é legível ou tenta noutro dispositivo.',
+      'Não conseguimos ler este PDF. Tenta outro ficheiro.',
     )
   }
 
@@ -867,18 +866,18 @@ export async function analyzePdfAndSummarize(
   const secondarySample = clipForLlm(raw, MAX_TEXT_SECONDARY)
 
   // Pedidos em sequência para não estourar o limite de tokens por minuto da Groq.
-  onProgress?.({ phase: 'groq', message: 'A pedir resumo à IA…' })
+  onProgress?.({ phase: 'groq', message: 'A fazer o resumo…' })
   const summary = await summarizeWithGroq(textSample, wordCount, apiKey)
 
-  onProgress?.({ phase: 'groq', message: 'A gerar insights…' })
+  onProgress?.({ phase: 'groq', message: 'A procurar as ideias principais…' })
   const extendedInsights = await extractExtendedInsightsWithGroq(secondarySample, apiKey)
 
-  onProgress?.({ phase: 'groq', message: 'A gerar mapa temporal…' })
+  onProgress?.({ phase: 'groq', message: 'A ver datas e números…' })
   const monthlyMap = await extractMonthlyMapWithGroq(secondarySample, apiKey)
 
   let mindMap: MindMapResult | null = null
   if (monthlyMap.entries.length === 0) {
-    onProgress?.({ phase: 'groq', message: 'A gerar mapa mental em ramos (Mermaid)…' })
+    onProgress?.({ phase: 'groq', message: 'A desenhar o mapa…' })
     mindMap = await extractMindMapWithGroq(clipForLlm(raw, 40_000), apiKey)
   }
 

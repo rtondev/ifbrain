@@ -27,18 +27,18 @@ import { jsPDF } from 'jspdf'
 
 /** Frases retro / humor para acompanhar a contagem de palavras. */
 const WORDS_RETRO_PHRASES = [
-  'Cheiro a papel térmico e café frio.',
-  'Um oceano modesto de tipografia.',
-  'Palavras que não pediram licença ao silêncio.',
-  'Texto com sabor a máquina de escrever barulhenta.',
-  'Onde cada vírgula conta uma pequena novela.',
-  'Um bando de letras a fazer de conta que são civilizadas.',
-  'Nem sempre breve, mas sempre com atitude.',
-  'Da era em que “scroll” era barra lateral.',
-  'Se fosse fita cassete, já tinha mudado de lado.',
-  'Documento que merecia uma moldura barata.',
-  'Entre parágrafos, a vida acontece aos saltos.',
-  'Resumo possível: muita coisa para pouca margem.',
+  'Documento curto e direto.',
+  'Bastante texto para ler.',
+  'Um PDF com muita informação.',
+  'Texto longo, mas dá para resumir.',
+  'Há bastante conteúdo aqui.',
+  'Documento médio.',
+  'Texto para ler com calma.',
+  'Muitas palavras neste ficheiro.',
+  'PDF bem preenchido.',
+  'Há o que analisar.',
+  'Documento com várias páginas de ideia.',
+  'Texto suficiente para um resumo.',
 ]
 
 function pickRetroPhrase(wordCount: number): string {
@@ -47,16 +47,12 @@ function pickRetroPhrase(wordCount: number): string {
 
 function readingTimeHint(wordCount: number): string {
   const min = Math.max(1, Math.round(wordCount / 200))
-  return `Leitura aprox.: ~${min} min (a ~200 pal./min).`
+  return `Tempo de leitura: cerca de ${min} min.`
 }
 
 function wordsCuriosityLine(wordCount: number): string {
-  const lines = [
-    `Em média, ${wordCount} palavras ≈ ${Math.max(1, Math.round(wordCount / 130))} min de fala contínua.`,
-    `Dá para ${Math.max(1, Math.floor(wordCount / 15))} tweets antigos (140 caracteres cada, em ideia).`,
-    `Se cada palavra fosse 1 passo, seriam ~${(wordCount * 0.65).toFixed(0)} m de caminhada simbólica.`,
-  ]
-  return lines[wordCount % lines.length]
+  const minFala = Math.max(1, Math.round(wordCount / 130))
+  return `Se fosses ler em voz alta, seriam cerca de ${minFala} min.`
 }
 
 @customElement('pdf-analyzer-app')
@@ -141,19 +137,14 @@ export class PdfAnalyzerApp extends LitElement {
     return html`
       <section id="center">
         <header class="page-head">
-          <h1>Análise de PDF</h1>
+          <h1>Ler o PDF</h1>
           <p class="lead">
-            Carrega um PDF: <strong>resumo</strong>, <strong>insights</strong> (palavras-chave,
-            pontos, perguntas, cronologia, entidades, tradução EN, tom, nível de leitura, dados
-            sensíveis, tabelas), <strong>mapa mental</strong> (Mermaid), <strong>chat</strong> com o
-            documento, <strong>comparar</strong> com outro PDF, <strong>exportar</strong> e
-            <strong>ouvir</strong> o resumo (Groq).
+            Envia um PDF. A app faz um <strong>resumo</strong>, mostra as ideias principais e
+            deixa-te <strong>fazer perguntas</strong> sobre o texto.
           </p>
           <p class="note-scan">
-            <strong>Digitalizações:</strong> primeiro tentamos ler o <em>texto do PDF</em>. Se não
-            houver texto (só imagem/scan), corre-se <strong>OCR automático</strong> no teu
-            dispositivo — a primeira vez pode demorar a descarregar os idiomas. PDFs muito longos
-            usam OCR só até ${MAX_OCR_PAGES} páginas por desempenho.
+            Se o PDF for uma foto (sem texto), a app tenta ler as letras sozinha. Ficheiros muito
+            grandes: só as primeiras ${MAX_OCR_PAGES} páginas.
           </p>
         </header>
 
@@ -175,11 +166,8 @@ export class PdfAnalyzerApp extends LitElement {
 
         <div class="file-panel" @dragover=${this._onDragOver} @drop=${this._onDrop}>
           <div class="file-panel__head">
-            <span class="file-panel__title">Ficheiro PDF</span>
-            <span class="file-panel__hint"
-              >Arrasta para aqui ou escolhe um ficheiro · digitalizações usam OCR se não houver
-              texto</span
-            >
+            <span class="file-panel__title">O teu PDF</span>
+            <span class="file-panel__hint">Arrasta o ficheiro para aqui, ou clica para escolher.</span>
           </div>
           <div class="file-panel__body">
             <input
@@ -193,7 +181,7 @@ export class PdfAnalyzerApp extends LitElement {
             <label for="pdf-file" class="pick-file" ?data-has-file=${!!this.file}>
               ${this.file
                 ? html`<span class="pick-file__name" title=${this.file.name}>${this.file.name}</span>`
-                : html`<span class="pick-file__cta">${ic.upload()} Escolher PDF…</span>`}
+                : html`<span class="pick-file__cta">${ic.upload()} Escolher ficheiro</span>`}
             </label>
             ${this.file
               ? html`
@@ -218,7 +206,7 @@ export class PdfAnalyzerApp extends LitElement {
             >
               ${this.loading
                 ? html`${ic.spin()} A analisar…`
-                : html`${ic.search()} Analisar PDF`}
+                : html`${ic.search()} Ler o PDF`}
             </button>
           </div>
         </div>
@@ -240,8 +228,8 @@ export class PdfAnalyzerApp extends LitElement {
                   : 'source-badge--layer'}"
               >
                 ${this.textSource === 'ocr'
-                  ? html`${ic.scan()} Texto obtido por OCR automático (digitalização).`
-                  : html`${ic.layers()} Texto lido da camada do PDF (selecionável).`}
+                  ? html`${ic.scan()} Este PDF era uma imagem. Lemos as letras automaticamente.`
+                  : html`${ic.layers()} Lemos o texto que já estava no PDF.`}
               </p>
               <div class="results-cols">
                 <div class="result-col result-col--words">
@@ -254,7 +242,7 @@ export class PdfAnalyzerApp extends LitElement {
                   </p>
                 </div>
                 <div class="result-col result-col--summary">
-                  <h2>${ic.bot()} Análise (IA)</h2>
+                  <h2>${ic.bot()} Resumo</h2>
                   <div class="summary markdown-body">
                     ${unsafeHTML(markdownToSafeHtml(this.summary))}
                   </div>
@@ -268,7 +256,7 @@ export class PdfAnalyzerApp extends LitElement {
                   ?disabled=${!this.extendedInsights}
                 >
                   ${ic.fileJson()}
-                  Exportar JSON
+                  Guardar dados
                 </button>
                 <button
                   type="button"
@@ -277,7 +265,7 @@ export class PdfAnalyzerApp extends LitElement {
                   ?disabled=${!this.fullText}
                 >
                   ${ic.fileType()}
-                  Exportar texto (.txt)
+                  Guardar texto
                 </button>
                 <button
                   type="button"
@@ -286,27 +274,27 @@ export class PdfAnalyzerApp extends LitElement {
                   ?disabled=${!this.summary}
                 >
                   ${this.ttsActive
-                    ? html`${ic.stop()} Parar voz`
-                    : html`${ic.volume()} Ouvir resumo (voz)`}
+                    ? html`${ic.stop()} Parar áudio`
+                    : html`${ic.volume()} Ouvir o resumo`}
                 </button>
               </div>
               ${this.summary && (this.ttsActive || this.ttsProgressPct > 0)
                 ? html`
-                    <div class="tts-panel" role="region" aria-label="Progresso da leitura em voz">
+                    <div class="tts-panel" role="region" aria-label="Progresso da leitura">
                       <div
                         class="tts-bar-wrap"
                         role="progressbar"
                         aria-valuemin="0"
                         aria-valuemax="100"
                         aria-valuenow=${Math.round(this.ttsProgressPct)}
-                        aria-label="Progresso estimado da leitura"
+                        aria-label="Quanto já foi lido"
                       >
                         <div class="tts-bar-fill" style="width: ${this.ttsProgressPct}%"></div>
                       </div>
                       <p class="tts-meta">
                         ${ic.timer()}
-                        Estimativa total: ~${this._fmtTts(this.ttsEstimateSec)} · Decorrido:
-                        ${this._fmtTts(this.ttsElapsedSec)} · Faltam ~${this._fmtTts(
+                        Tempo total: cerca de ${this._fmtTts(this.ttsEstimateSec)} · Já passou:
+                        ${this._fmtTts(this.ttsElapsedSec)} · Falta cerca de ${this._fmtTts(
                           Math.max(0, this.ttsEstimateSec - this.ttsElapsedSec),
                         )}
                       </p>
@@ -316,12 +304,12 @@ export class PdfAnalyzerApp extends LitElement {
               ${this._renderInsightsDeck()}
               <div class="extras-grid">
                 <div class="extra-card">
-                  <h3 class="extra-title">${ic.chat()} Perguntar ao documento</h3>
+                  <h3 class="extra-title">${ic.chat()} Perguntar sobre o PDF</h3>
                   <div class="chat-composer">
                     <textarea
                       class="chat-input"
                       rows="3"
-                      placeholder="Escreve uma pergunta sobre o conteúdo…"
+                      placeholder="Escreve a tua pergunta…"
                       .value=${this.chatQuestion}
                       @input=${(e: Event) => {
                         this.chatQuestion = (e.target as HTMLTextAreaElement).value
@@ -376,7 +364,7 @@ export class PdfAnalyzerApp extends LitElement {
                   >
                     ${this.compareLoading
                       ? html`${ic.spin()} A comparar…`
-                      : html`${ic.scale()} Comparar documentos`}
+                      : html`${ic.scale()} Comparar os dois`}
                   </button>
                   ${this.compareResult
                     ? html`<div class="compare-out markdown-body">
@@ -408,7 +396,7 @@ export class PdfAnalyzerApp extends LitElement {
       f.type === 'application/pdf' ||
       f.name.toLowerCase().endsWith('.pdf')
     if (!ok) {
-      this.error = 'Larga um ficheiro PDF (.pdf).'
+      this.error = 'Escolhe um ficheiro PDF.'
       return
     }
     this._setFile(f)
@@ -534,7 +522,7 @@ export class PdfAnalyzerApp extends LitElement {
     } catch (err) {
       console.error(err)
       host.innerHTML =
-        '<p class="mapa-mental-fail">Não foi possível desenhar o diagrama Mermaid. Recarrega e tenta outra vez.</p>'
+        '<p class="mapa-mental-fail">Não deu para desenhar o mapa. Recarrega a página e tenta outra vez.</p>'
     }
   }
 
@@ -550,22 +538,22 @@ export class PdfAnalyzerApp extends LitElement {
 
     return html`
       <div class="insights-deck">
-        <h2 class="section-title">${ic.bulb()} Insights extra</h2>
+        <h2 class="section-title">${ic.bulb()} Mais detalhes</h2>
         <div class="insights-grid">
           <details class="insight-block" open>
-            <summary>${ic.key()} Palavras-chave</summary>
+            <summary>${ic.key()} Palavras importantes</summary>
             ${li(ex.keywords)}
           </details>
           <details class="insight-block" open>
-            <summary>${ic.checks()} Pontos principais</summary>
+            <summary>${ic.checks()} Ideias principais</summary>
             ${li(ex.mainPoints)}
           </details>
           <details class="insight-block">
-            <summary>${ic.help()} Perguntas sugeridas</summary>
+            <summary>${ic.help()} Perguntas que podes fazer</summary>
             ${li(ex.suggestedQuestions)}
           </details>
           <details class="insight-block">
-            <summary>${ic.history()} Cronologia</summary>
+            <summary>${ic.history()} Datas e ordem dos factos</summary>
             ${ex.timeline.length
               ? html`<ul class="insight-ul">
                   ${ex.timeline.map(
@@ -576,14 +564,14 @@ export class PdfAnalyzerApp extends LitElement {
               : html`<p class="empty-hint">—</p>`}
           </details>
           <details class="insight-block">
-            <summary>${ic.users()} Entidades</summary>
+            <summary>${ic.users()} Nomes e sítios</summary>
             <div class="entity-cols">
               <div>
                 <span class="entity-label">Pessoas</span>
                 ${li(ex.entities.people)}
               </div>
               <div>
-                <span class="entity-label">Organizações</span>
+                <span class="entity-label">Empresas / grupos</span>
                 ${li(ex.entities.organizations)}
               </div>
               <div>
@@ -591,39 +579,39 @@ export class PdfAnalyzerApp extends LitElement {
                 ${li(ex.entities.places)}
               </div>
               <div>
-                <span class="entity-label">Valores / quantidades</span>
+                <span class="entity-label">Números e valores</span>
                 ${li(ex.entities.amounts)}
               </div>
             </div>
           </details>
           <details class="insight-block">
-            <summary>${ic.lang()} Tradução (EN)</summary>
+            <summary>${ic.lang()} Em inglês</summary>
             ${ex.translation.summaryEn
               ? html`<p class="trans-en">${ex.translation.summaryEn}</p>`
               : html`<p class="empty-hint">—</p>`}
           </details>
           <details class="insight-block">
-            <summary>${ic.drama()} Tom e tipo</summary>
-            <p><strong>Formalidade:</strong> ${ex.tone.formality || '—'}</p>
-            <p><strong>Tipo de documento:</strong> ${ex.tone.documentTypeGuess || '—'}</p>
-            <p><strong>Público:</strong> ${ex.tone.audience || '—'}</p>
+            <summary>${ic.drama()} Como está escrito</summary>
+            <p><strong>Tom:</strong> ${ex.tone.formality || '—'}</p>
+            <p><strong>Que tipo de PDF:</strong> ${ex.tone.documentTypeGuess || '—'}</p>
+            <p><strong>Para quem:</strong> ${ex.tone.audience || '—'}</p>
           </details>
           <details class="insight-block">
-            <summary>${ic.book()} Nível de leitura</summary>
+            <summary>${ic.book()} Fácil ou difícil de ler</summary>
             <p>${ex.readingLevel || '—'}</p>
           </details>
           <details class="insight-block">
-            <summary>${ic.shield()} Dados sensíveis (aviso)</summary>
+            <summary>${ic.shield()} Dados pessoais (aviso)</summary>
             ${ex.sensitiveHints.length
               ? html`<ul class="insight-ul warn-list">
                   ${ex.sensitiveHints.map(
                     (h) => html`<li><strong>${h.type}</strong>: ${h.note}</li>`,
                   )}
                 </ul>`
-              : html`<p class="empty-hint">Nada assinalado pela IA.</p>`}
+              : html`<p class="empty-hint">Não vimos nada perigoso neste texto.</p>`}
           </details>
           <details class="insight-block">
-            <summary>${ic.table()} Tabelas / grelhas</summary>
+            <summary>${ic.table()} Tabelas</summary>
             <p>${ex.tablesDescription || '—'}</p>
           </details>
         </div>
@@ -908,7 +896,7 @@ export class PdfAnalyzerApp extends LitElement {
     return html`
       <div class="mapa-mental-section">
         <div class="mapa-mental-head">
-          <h2 class="mapa-mental-h2">${ic.map()} Mapa mental</h2>
+          <h2 class="mapa-mental-h2">${ic.map()} Mapa</h2>
           <button
             type="button"
             class="toolbar-btn mapa-export-btn"
@@ -921,7 +909,7 @@ export class PdfAnalyzerApp extends LitElement {
         ${hasMonthly
           ? html`
               <p class="mapa-mental-lead">
-                Evolução temporal dos dados encontrados no documento (gráfico de barras Mermaid).
+                Números por mês, se o PDF tiver datas.
               </p>
               ${!this._badMapTitle(mm!.title)
                 ? html`<p class="mapa-mental-sub">${mm!.title}</p>`
@@ -934,7 +922,7 @@ export class PdfAnalyzerApp extends LitElement {
             `
           : html`
               <p class="mapa-mental-lead">
-                Estrutura em ramos do conteúdo (diagrama Mermaid). Sem série mensal clara no texto.
+                Ideias do PDF em ramos. Não havia números claros por mês.
               </p>
             `}
         <div id="mermaid-svg-host" class="mermaid-svg-host"></div>
