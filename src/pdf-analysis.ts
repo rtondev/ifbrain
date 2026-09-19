@@ -8,19 +8,18 @@ GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.mjs`
 
 const GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions'
 /** Modelo Groq — llama-3.3-70b-versatile foi descontinuado a 16/08/2026.
- *  No plano gratuito (~8000 TPM) preferimos o 20B; override com VITE_GROQ_MODEL. */
+ *  gpt-oss-120b (131k contexto) por omissão; override com VITE_GROQ_MODEL. */
 const GROQ_MODEL =
-  (import.meta.env.VITE_GROQ_MODEL as string | undefined)?.trim() || 'openai/gpt-oss-20b'
+  (import.meta.env.VITE_GROQ_MODEL as string | undefined)?.trim() || 'openai/gpt-oss-120b'
 /**
  * Limite de caracteres do documento por pedido.
- * O tier gratuito Groq tem ~8000 TPM: pedidos maiores falham com rate_limit_exceeded.
- * (~4 caracteres ≈ 1 token; deixamos margem para o prompt e a resposta.)
+ * gpt-oss-120b tem ~131k tokens; ~4 caracteres ≈ 1 token. Deixamos margem para prompt/resposta.
  */
-const MAX_TEXT_FOR_LLM = 5_000
-/** Amostras ainda mais curtas para pedidos secundários (mapas / insights). */
-const MAX_TEXT_SECONDARY = 3_500
+const MAX_TEXT_FOR_LLM = 80_000
+/** Amostras para pedidos secundários (mapas / insights) — ainda cabem no contexto. */
+const MAX_TEXT_SECONDARY = 50_000
 /** Máximo de páginas processadas por OCR (desempenho no browser). */
-export const MAX_OCR_PAGES = 30
+export const MAX_OCR_PAGES = 80
 /** Escala de renderização para OCR (maior = mais lento, melhor leitura). */
 const OCR_SCALE = 2.25
 
@@ -33,7 +32,7 @@ function clipForLlm(text: string, max = MAX_TEXT_FOR_LLM): string {
 function throwIfGroqFailed(status: number, errBody: string, label: string): never {
   if (/rate_limit_exceeded|Request too large|tokens per minute|TPM/i.test(errBody)) {
     throw new Error(
-      `${label}: o PDF é grande demais para o limite gratuito da Groq (8000 tokens/min). ` +
+      `${label}: limite de ritmo da Groq (tokens/min). ` +
         `Espera cerca de 1 minuto e tenta de novo, ou usa um PDF mais curto. ` +
         `(Detalhe: ${errBody.slice(0, 280)})`,
     )
@@ -514,12 +513,12 @@ export async function compareDocumentsWithGroq(
           role: 'user',
           content: `Documento A:
 ---
-${clipForLlm(textA, 2_500)}
+${clipForLlm(textA, 25_000)}
 ---
 
 Documento B:
 ---
-${clipForLlm(textB, 2_500)}
+${clipForLlm(textB, 25_000)}
 ---
 
 Compara: (1) propósito/tipo de cada um, (2) pontos em comum, (3) diferenças principais, (4) se um complementa ou contradiz o outro. Se um texto for muito curto, indica-o.`,
@@ -867,7 +866,7 @@ export async function analyzePdfAndSummarize(
   const { wordCount, textSample } = analyzeExtractedText(raw)
   const secondarySample = clipForLlm(raw, MAX_TEXT_SECONDARY)
 
-  // Pedidos em sequência: o plano gratuito (~8000 TPM) não aguenta vários PDFs grandes em paralelo.
+  // Pedidos em sequência para não estourar o limite de tokens por minuto da Groq.
   onProgress?.({ phase: 'groq', message: 'A pedir resumo à IA…' })
   const summary = await summarizeWithGroq(textSample, wordCount, apiKey)
 
@@ -880,7 +879,7 @@ export async function analyzePdfAndSummarize(
   let mindMap: MindMapResult | null = null
   if (monthlyMap.entries.length === 0) {
     onProgress?.({ phase: 'groq', message: 'A gerar mapa mental em ramos (Mermaid)…' })
-    mindMap = await extractMindMapWithGroq(clipForLlm(raw, 2_500), apiKey)
+    mindMap = await extractMindMapWithGroq(clipForLlm(raw, 40_000), apiKey)
   }
 
   return {

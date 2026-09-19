@@ -72,7 +72,7 @@ O texto completo pode ser enorme. Para o modelo existe um limite aproximado **`M
 ## 5. Como funciona a parte da IA (Groq)
 
 - **Endpoint**: `POST` para a API de chat da Groq, com **Bearer** `VITE_GROQ_API_KEY`.
-- **Modelo** (em código): `openai/gpt-oss-20b` por omissão (adequado ao limite gratuito ~8000 TPM). Podes alterar com `VITE_GROQ_MODEL` (ex.: `openai/gpt-oss-120b`, `qwen/qwen3.6-27b`). O texto do PDF é truncado (~5k caracteres) e os pedidos à IA correm em sequência para não estourar o TPM.
+- **Modelo** (em código): `openai/gpt-oss-120b` por omissão (131k de contexto). Podes alterar com `VITE_GROQ_MODEL` (ex.: `openai/gpt-oss-20b`, `qwen/qwen3.6-27b`). O texto do PDF é truncado (~80k caracteres no resumo; ~50k nos pedidos secundários) e os pedidos à IA correm em sequência para não estourar o TPM.
 - **Resumo**: um pedido com instruções em português para devolver **Markdown** (secções, listas).
 - **Insights extra**: outro pedido com `response_format` JSON (estrutura: palavras-chave, entidades, cronologia, etc.).
 - **Mapa mensal**: JSON com série por mês; se houver dados, gera-se um diagrama **xychart-beta** Mermaid.
