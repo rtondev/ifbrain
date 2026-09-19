@@ -1017,35 +1017,34 @@ export class PdfAnalyzerApp extends LitElement {
     unsafeCSS(fontAwesomeCss),
     css`
     :host {
-      --text: #4a5560;
-      --text-h: #0c1a12;
-      --bg: #f7fbf8;
-      --border: #c8ddd0;
-      --code-bg: #e8f5ec;
-      --accent: #15803d;
-      --accent-bg: rgba(21, 128, 61, 0.1);
-      --accent-border: rgba(21, 128, 61, 0.45);
-      --accent-alt: #dc2626;
-      --accent-alt-bg: rgba(220, 38, 38, 0.1);
-      --accent-alt-border: rgba(220, 38, 38, 0.45);
-      --social-bg: rgba(232, 245, 236, 0.65);
-      --shadow:
-        rgba(21, 128, 61, 0.12) 0 10px 15px -3px,
-        rgba(220, 38, 38, 0.08) 0 4px 6px -2px;
+      --text: #1c1c1e;
+      --text-h: #000000;
+      --bg: #ffffff;
+      --border: rgba(60, 60, 67, 0.12);
+      --code-bg: #f2f2f7;
+      --accent: #007aff;
+      --accent-bg: rgba(0, 122, 255, 0.1);
+      --accent-border: rgba(0, 122, 255, 0.35);
+      --accent-alt: #ff3b30;
+      --accent-alt-bg: rgba(255, 59, 48, 0.1);
+      --accent-alt-border: rgba(255, 59, 48, 0.35);
+      --social-bg: #f2f2f7;
+      --shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+      --link: #007aff;
+      --muted: #8e8e93;
 
-      --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-      --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-      --mono: ui-monospace, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+      --heading: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-      font: 18px/145% var(--sans);
-      letter-spacing: 0.18px;
+      font: 17px/1.47 var(--sans);
+      letter-spacing: -0.22px;
 
       width: 1126px;
-      max-width: 100%;
-      margin: 0 auto;
+      max-width: calc(100% - 24px);
+      margin: 12px auto 24px;
       text-align: center;
-      border-inline: 1px solid var(--border);
-      min-height: calc(100svh - 2.75rem);
+      min-height: calc(100svh - 3.5rem);
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
@@ -1054,35 +1053,42 @@ export class PdfAnalyzerApp extends LitElement {
 
     @media (prefers-color-scheme: dark) {
       :host {
-        --text: #9cb5a5;
-        --text-h: #ecfdf3;
-        --bg: #0f1612;
-        --border: #2a3d32;
-        --code-bg: #1a2a20;
-        --accent: #4ade80;
-        --accent-bg: rgba(74, 222, 128, 0.14);
-        --accent-border: rgba(74, 222, 128, 0.45);
-        --accent-alt: #f87171;
-        --accent-alt-bg: rgba(248, 113, 113, 0.14);
-        --accent-alt-border: rgba(248, 113, 113, 0.45);
-        --social-bg: rgba(26, 42, 32, 0.7);
-        --shadow:
-          rgba(0, 0, 0, 0.45) 0 10px 15px -3px,
-          rgba(74, 222, 128, 0.08) 0 4px 6px -2px;
+        --text: #f5f5f7;
+        --text-h: #ffffff;
+        --bg: #1c1c1e;
+        --border: rgba(84, 84, 88, 0.45);
+        --code-bg: #2c2c2e;
+        --accent: #0a84ff;
+        --accent-bg: rgba(10, 132, 255, 0.16);
+        --accent-border: rgba(10, 132, 255, 0.45);
+        --accent-alt: #ff453a;
+        --accent-alt-bg: rgba(255, 69, 58, 0.16);
+        --accent-alt-border: rgba(255, 69, 58, 0.45);
+        --social-bg: #2c2c2e;
+        --shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+        --link: #0a84ff;
+        --muted: #8e8e93;
       }
+    }
+
+    a {
+      color: var(--link);
+      text-underline-offset: 3px;
     }
 
     h1,
     h2 {
       font-family: var(--heading);
-      font-weight: 500;
+      font-weight: 700;
       color: var(--text-h);
     }
 
     h1 {
-      font-size: 56px;
-      letter-spacing: -1.68px;
-      margin: 32px 0;
+      font-size: 40px;
+      line-height: 1.05;
+      letter-spacing: -1.2px;
+      margin: 0 0 12px;
+      text-align: left;
     }
 
     h2 {
@@ -1097,20 +1103,24 @@ export class PdfAnalyzerApp extends LitElement {
     }
 
     .lead {
-      max-width: 36rem;
-      margin: 0 auto 16px;
+      max-width: 40rem;
+      margin: 0 0 8px;
+      text-align: left;
+      font-size: 17px;
+      line-height: 1.47;
+      font-weight: 400;
     }
 
     .note-scan {
       max-width: 40rem;
-      margin: 0 auto 24px;
-      padding: 12px 16px;
+      margin: 0 0 8px;
+      padding: 0;
       text-align: left;
-      font-size: 15px;
-      line-height: 145%;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--social-bg);
+      font-size: 17px;
+      line-height: 1.47;
+      border-radius: 0;
+      border: none;
+      background: transparent;
       color: var(--text);
     }
 
@@ -1131,10 +1141,10 @@ export class PdfAnalyzerApp extends LitElement {
 
     .warn {
       max-width: 40rem;
-      margin: 0 auto 20px;
-      padding: 12px 16px;
+      margin: 0 0 12px;
+      padding: 14px 16px;
       text-align: left;
-      border-radius: 6px;
+      border-radius: 16px;
       border: 1px solid var(--accent-alt-border);
       background: var(--accent-alt-bg);
       font-size: 15px;
@@ -1147,11 +1157,16 @@ export class PdfAnalyzerApp extends LitElement {
     #center {
       display: flex;
       flex-direction: column;
-      gap: 25px;
-      place-content: center;
-      place-items: center;
+      gap: 16px;
+      align-items: stretch;
       flex-grow: 1;
-      padding: 8px 20px 24px;
+      padding: 40px 44px 36px;
+      margin: 0;
+      background: var(--bg);
+      border-radius: 40px;
+      box-shadow: var(--shadow);
+      text-align: left;
+      box-sizing: border-box;
     }
 
     .file-input-hidden {
@@ -1168,8 +1183,8 @@ export class PdfAnalyzerApp extends LitElement {
 
     .file-panel {
       width: 100%;
-      max-width: min(32rem, 100%);
-      border-radius: 12px;
+      max-width: min(40rem, 100%);
+      border-radius: 22px;
       border: 1px solid var(--border);
       background: var(--bg);
       overflow: hidden;
@@ -1219,8 +1234,8 @@ export class PdfAnalyzerApp extends LitElement {
       align-items: center;
       justify-content: center;
       padding: 12px 16px;
-      border-radius: 8px;
-      border: 2px dashed var(--accent-border);
+      border-radius: 14px;
+      border: 1.5px dashed var(--accent-border);
       background: var(--accent-bg);
       color: var(--text-h);
       cursor: pointer;
@@ -1308,19 +1323,19 @@ export class PdfAnalyzerApp extends LitElement {
       justify-content: center;
       padding: 12px 16px;
       margin-bottom: 0;
-      border-radius: 8px;
+      border-radius: 14px;
       font-family: var(--sans);
       font-size: 15px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .status-hint {
       margin: 0;
-      max-width: 36rem;
+      max-width: 40rem;
       font-size: 15px;
       line-height: 145%;
       color: var(--accent);
-      text-align: center;
+      text-align: left;
     }
 
     .counter {
@@ -1353,9 +1368,9 @@ export class PdfAnalyzerApp extends LitElement {
 
     .err {
       color: var(--accent-alt);
-      max-width: 36rem;
+      max-width: 40rem;
       font-size: 16px;
-      text-align: center;
+      text-align: left;
     }
 
     #results-wrap {
@@ -1416,7 +1431,7 @@ export class PdfAnalyzerApp extends LitElement {
       font-family: var(--sans);
       font-size: 15px;
       font-weight: 500;
-      border-radius: 8px;
+      border-radius: 980px;
       border: 1px solid var(--border);
       color: var(--text-h);
       background: var(--social-bg);

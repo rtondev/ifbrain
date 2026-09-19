@@ -2,30 +2,26 @@
 
 :root {
   color-scheme: light dark;
-  background-color: #f7fbf8;
-  --nav-text: #4a5560;
-  --nav-text-h: #0c1a12;
-  --nav-border: #c8ddd0;
-  --nav-social-bg: rgba(232, 245, 236, 0.65);
-  --nav-accent: #15803d;
-  --nav-accent-alt: #dc2626;
-  --nav-shadow:
-    rgba(21, 128, 61, 0.12) 0 10px 15px -3px,
-    rgba(220, 38, 38, 0.08) 0 4px 6px -2px;
+  background-color: #f2f2f7;
+  --nav-text: #3c3c43;
+  --nav-text-h: #000000;
+  --nav-border: rgba(60, 60, 67, 0.12);
+  --nav-social-bg: rgba(255, 255, 255, 0.72);
+  --nav-accent: #007aff;
+  --nav-accent-alt: #ff3b30;
+  --nav-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    background-color: #0f1612;
-    --nav-text: #9cb5a5;
-    --nav-text-h: #ecfdf3;
-    --nav-border: #2a3d32;
-    --nav-social-bg: rgba(26, 42, 32, 0.7);
-    --nav-accent: #4ade80;
-    --nav-accent-alt: #f87171;
-    --nav-shadow:
-      rgba(0, 0, 0, 0.45) 0 10px 15px -3px,
-      rgba(74, 222, 128, 0.08) 0 4px 6px -2px;
+    background-color: #000000;
+    --nav-text: #ebebf5;
+    --nav-text-h: #ffffff;
+    --nav-border: rgba(84, 84, 88, 0.45);
+    --nav-social-bg: rgba(28, 28, 30, 0.82);
+    --nav-accent: #0a84ff;
+    --nav-accent-alt: #ff453a;
+    --nav-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   }
 }
 
@@ -43,14 +39,16 @@
   letter-spacing: 0.18px;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   color: var(--nav-text);
-  background: color-mix(in srgb, #f7fbf8 94%, transparent);
+  background: color-mix(in srgb, #f2f2f7 86%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--nav-border);
   box-sizing: border-box;
 }
 
 @media (prefers-color-scheme: dark) {
   .app-nav {
-    background: color-mix(in srgb, #0f1612 96%, transparent);
+    background: color-mix(in srgb, #000000 72%, transparent);
   }
 }
 
@@ -60,7 +58,7 @@
   justify-content: center;
   gap: 0.4rem;
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: 980px;
   color: var(--nav-text-h);
   font-size: 16px;
   font-weight: 500;
