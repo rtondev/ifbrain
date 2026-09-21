@@ -1,4 +1,7 @@
 import './polyfills.js'
+import { installErrorReporting } from './error-reporter.js'
+
+installErrorReporting()
 import type { PropertyValues } from '@lit/reactive-element'
 import { LitElement, css, html } from 'lit'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
